@@ -9,66 +9,79 @@ from data_types import *
 
 
 class BaseDBAPI:
-    def __init__(self, *connections):
-        self._connections = connections
+    def __init__(self, db_connection):
+        self.db = db_connection
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        for connection in self._connections:
-            connection.close()
+        self.db.close()
+
+    @staticmethod
+    def _find_value_in_datalist(datalist: list[Dataclass], field, value):
+        for data in datalist:
+            if data.__diсt__[field] == value:
+                return data
 
 
 class DatabaseAPI:
     class _SetupAPI(BaseDBAPI):
-        def __init__(self, main_db_connection, auth_db_connection):
-            super().__init__(main_db_connection, auth_db_connection)
-            self.main: Connection = main_db_connection
-            self.auth: Connection = auth_db_connection
-
         @staticmethod
         def _hash_password(password):
             return str(hex(hash(password)))
 
-        def set_users(self, users: list[User]):
-            cursor = self.auth.cursor()
+
+
+
+        def set_users(self, users: UserList):
+            cursor = self.db.cursor()
             cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Users (
-            uid INTEGER PRIMARY KEY AUTOINCREMENT,
-            full_name TEXT NOT NULL,
-            login TEXT UNIQUE,
-            password_hash TEXT,
-            is_admin INTEGER NOT NULL
-            )
-            """)
+                        CREATE TABLE IF NOT EXISTS Users (
+                        uid INTEGER PRIMARY KEY AUTOINCREMENT,
+                        full_name TEXT NOT NULL UNIQUE,
+                        login TEXT UNIQUE,
+                        password_hash TEXT,
+                        is_admin INTEGER NOT NULL
+                        )
+                        """)
             for user in users:
-                cursor.execute('INSERT INTO Users (full_name, login, password_hash, is_admin) VALUES (?, ?, ?)',
+                cursor.execute('INSERT INTO Users (full_name, login, password_hash, is_admin) VALUES (?, ?, ?, ?)',
                                (user.full_name, user.login, self._hash_password(user.password), int(user.is_admin)))
-            self.auth.commit()
+            self.db.commit()
+
+        def set_new_employees(self, employees: EmployeeList):
+            cursor = self.db.cursor()
+            cursor.execute("""
+                        CREATE TABLE IF NOT EXISTS Employees (
+                        id INTEGER PRIMARY KEY,
+                        location_id INTEGER UNIQUE,
+                        daily_route_id INTEGER UNIQUE,
+                        grade TEXT
+                        )
+                        """)
+
+            cursor.execute('SELECT uid, full_name FROM Users GROUP BY age')
+            for employee in employees:
+
+                cursor.execute('INSERT INTO Employees (id, login, password_hash, is_admin) VALUES (?, ?, ?, ?)',
+                               (user.full_name, user.login, self._hash_password(user.password), int(user.is_admin)))
+            self.db.commit()
 
     class _UserAPI(BaseDBAPI):
-        def __init__(self, main_db_connection):
-            super().__init__(main_db_connection)
-            self.main = main_db_connection
+        ...
 
     class _AdminAPI(BaseDBAPI):
-        def __init__(self, main_db_connection, auth_db_connection):
-            super().__init__(main_db_connection, auth_db_connection)
-            self.main = main_db_connection
-            self.auth = auth_db_connection
+        ...
 
     def __new__(cls, login='', password='', is_setup=False):
-        auth_db_connection = sqlite3.connect(AUTH_DATABASE)
-        main_db_connection = sqlite3.connect(MAIN_DATABASE)
+        db_connection = sqlite3.connect(AUTH_DATABASE)
         if is_setup:
-            return cls._SetupAPI(main_db_connection, auth_db_connection)
+            return cls._SetupAPI(db_connection)
+        elif cls._check_if_admin(db_connection, login, password):
+            return cls._AdminAPI(db_connection)
         else:
-            if cls._check_if_admin(auth_db_connection, login, password):
-                return cls._AdminAPI(main_db_connection, auth_db_connection)
-            else:
-                auth_db_connection.close()
-                return cls._UserAPI(main_db_connection)
+            return cls._UserAPI(db_connection)
 
     @staticmethod
     def _check_if_admin(auth_db, login, password):

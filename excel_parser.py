@@ -18,10 +18,8 @@ class ExcelParser:
             return True
 
     def parse_employees(self):
-        id = 0
         for index_row in range(1, self.employee_sheet.max_row + 1):
             employee = Employee(
-                id,
                 self.employee_sheet[index_row][0].value,
                 Location(self.employee_sheet[index_row][1].value),
                 self.employee_sheet[index_row][2].value,
@@ -29,13 +27,10 @@ class ExcelParser:
             )
             if self._validate(employee):
                 self.employees.append(employee)
-                id += 1
 
     def parse_points(self):
-        id = 0
         for index_row in range(2, self.point_sheet.max_row + 1):
             point = Point(
-                        id,
                         self.point_sheet[index_row][1].value,
                         True if self.point_sheet[index_row][2].value == 'вчера' else False,
                         True if self.point_sheet[index_row][3].value == 'да' else False,
@@ -46,4 +41,3 @@ class ExcelParser:
 
             if self._validate(point):
                 self.points.append(point)
-                id += 1

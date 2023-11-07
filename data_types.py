@@ -1,5 +1,11 @@
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
+from typing import Protocol
+
+
+class Dataclass(Protocol):
+    def __init__(self):
+        self.__diсt__ = ...
 
 
 class Grade:
@@ -18,13 +24,13 @@ class Location:
 
 @dataclass
 class Point:
-    id: int
     address: Location
     is_connected_yesterday: bool
     have_cards_and_materials: bool
     days_from_last_card: int
     accepted_requests: int
     issued_cards: int
+    id: int = None
 
 
 @dataclass
@@ -95,11 +101,11 @@ task_handlers = [MotivationTaskHandler, InstructTaskHandler, DeliveryTaskHandler
 
 @dataclass
 class Employee:
-    id: int
     full_name: str
     address: Location
     grade: str
-    route: 'Route'
+    daily_route: 'Route'
+    id: int = None
 
 
 @dataclass
@@ -114,7 +120,7 @@ class User:
 TaskList = Route = list[Task]
 EmployeeList = list[Employee]
 PointList = list[Point]
+UserList = list[User]
 
 if __name__ == '__main__':
-    emp = EmployeeList([Employee(1, 'Вася', Location('lkalkas'), Grade.middle, Route(list()))])
-    print(*emp)
+    pass
