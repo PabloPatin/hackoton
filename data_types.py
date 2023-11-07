@@ -102,6 +102,15 @@ class Employee:
     route: 'Route'
 
 
+@dataclass
+class User:
+    login: str
+    password: str
+    full_name: str
+    is_admin: bool
+    uid: int = None
+
+
 TaskList = Route = list[Task]
 EmployeeList = list[Employee]
 PointList = list[Point]
