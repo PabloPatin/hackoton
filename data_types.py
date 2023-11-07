@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 from typing import Protocol
 
 
+
 class Dataclass(Protocol):
-    def __init__(self):
-        self.__diсt__ = ...
+    __dict__ = ...
 
 
 class Grade:
@@ -15,8 +15,9 @@ class Grade:
 
 
 class Location:
-    def __init__(self, adress):
+    def __init__(self, adress, id: int = None):
         self.adress = adress
+        self.id = id
 
     def __repr__(self):
         return f"'{self.adress}'"
@@ -24,7 +25,7 @@ class Location:
 
 @dataclass
 class Point:
-    address: Location
+    location: Location
     is_connected_yesterday: bool
     have_cards_and_materials: bool
     days_from_last_card: int
@@ -102,7 +103,7 @@ task_handlers = [MotivationTaskHandler, InstructTaskHandler, DeliveryTaskHandler
 @dataclass
 class Employee:
     full_name: str
-    address: Location
+    location: Location
     grade: str
     daily_route: 'Route'
     id: int = None
@@ -110,9 +111,9 @@ class Employee:
 
 @dataclass
 class User:
+    full_name: str
     login: str
     password: str
-    full_name: str
     is_admin: bool
     uid: int = None
 
@@ -123,4 +124,5 @@ PointList = list[Point]
 UserList = list[User]
 
 if __name__ == '__main__':
-    pass
+    vasa = Employee('Василий', None, None, None)
+    print(vasa.__dict__)

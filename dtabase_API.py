@@ -3,7 +3,7 @@ import sqlite3
 from sqlite3 import Connection
 from os import getenv
 from dotenv import load_dotenv
-from settings import MAIN_DATABASE, AUTH_DATABASE
+from settings import MAIN_DATABASE
 from abc import ABC, abstractmethod
 from data_types import *
 
@@ -21,8 +21,11 @@ class BaseDBAPI:
     @staticmethod
     def _find_value_in_datalist(datalist: list[Dataclass], field, value):
         for data in datalist:
-            if data.__diсt__[field] == value:
+            if data.__dict__[field] == value:
                 return data
+
+
+# class
 
 
 class DatabaseAPI:
@@ -30,9 +33,6 @@ class DatabaseAPI:
         @staticmethod
         def _hash_password(password):
             return str(hex(hash(password)))
-
-
-
 
         def set_users(self, users: UserList):
             cursor = self.db.cursor()
@@ -50,23 +50,29 @@ class DatabaseAPI:
                                (user.full_name, user.login, self._hash_password(user.password), int(user.is_admin)))
             self.db.commit()
 
-        def set_new_employees(self, employees: EmployeeList):
+        def set_employees(self, employees: EmployeeList):
             cursor = self.db.cursor()
             cursor.execute("""
                         CREATE TABLE IF NOT EXISTS Employees (
                         id INTEGER PRIMARY KEY,
-                        location_id INTEGER UNIQUE,
-                        daily_route_id INTEGER UNIQUE,
+                        location_id INTEGER,
+                        daily_route_id INTEGER DEFAULT NULL,
                         grade TEXT
                         )
                         """)
-
-            cursor.execute('SELECT uid, full_name FROM Users GROUP BY age')
-            for employee in employees:
-
-                cursor.execute('INSERT INTO Employees (id, login, password_hash, is_admin) VALUES (?, ?, ?, ?)',
-                               (user.full_name, user.login, self._hash_password(user.password), int(user.is_admin)))
+            cursor.execute('SELECT uid, full_name FROM Users WHERE is_admin==0')
+            for uid, full_name in cursor.fetchall():
+                employee = self._find_value_in_datalist(employees, 'full_name', full_name)
+                employee.id = uid
+                print(employee)
+                cursor.execute('INSERT INTO Employees (id, location_id, grade) VALUES (?, ?, ?)',
+                               (employee.id, employee.location.id, employee.grade))
             self.db.commit()
+
+            # for employee in employees:
+            #     cursor.execute('INSERT INTO Employees (id, login, password_hash, is_admin) VALUES (?, ?, ?, ?)',
+            #                    (user.full_name, user.login, self._hash_password(user.password), int(user.is_admin)))
+            # self.db.commit()
 
     class _UserAPI(BaseDBAPI):
         ...
@@ -74,8 +80,8 @@ class DatabaseAPI:
     class _AdminAPI(BaseDBAPI):
         ...
 
-    def __new__(cls, login='', password='', is_setup=False):
-        db_connection = sqlite3.connect(AUTH_DATABASE)
+    def __new__(cls, login='', password='', is_setup=False) -> BaseDBAPI:
+        db_connection = sqlite3.connect(MAIN_DATABASE)
         if is_setup:
             return cls._SetupAPI(db_connection)
         elif cls._check_if_admin(db_connection, login, password):
