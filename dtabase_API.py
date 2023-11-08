@@ -142,7 +142,7 @@ class DatabaseAPI:
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         employee_id INTEGER NOT NULL,
                         sequence_len INTEGER NOT NULL,
-                        date TEXT,
+                        date TEXT
                         )
                         """)
             date = datetime.now().strftime('%d-%m-%Y')

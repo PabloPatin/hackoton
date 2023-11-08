@@ -4,7 +4,7 @@ from excel_parser import ExcelParser
 from data_types import *
 import os
 from dotenv import load_dotenv
-from dtabase_API import DatabaseAPI, BaseDBAPI
+from dtabase_API import DatabaseAPI
 from yandex_API import ask_yandex_for_time_matrix
 from settings import CITY
 
@@ -51,19 +51,20 @@ def set_database(db):
     locations = [Location('Велен', 12.56, 15.031),
                  Location('Вызима', 12.019202, 15.213123)]
     # db.set_locations(locations)
-    employees = [Employee('Василий', locations[0], Grade.middle, None),
-                 Employee('Пётр', locations[1], Grade.junior, None),
-                 Employee('Григорий', locations[0], Grade.senior, None)]
+    employees = [Employee('Василий', locations[0], Grade.middle, []),
+                 Employee('Пётр', locations[1], Grade.junior, []),
+                 Employee('Григорий', locations[0], Grade.senior, [])]
     # db.set_employees(employees)
     points = [Point(locations[0], True, False, 7, 9, 5),
               Point(locations[1], False, True, 7, 16, 10)]
     # db.set_points(points)
     tasks = []
     TaskManager(points, employees, tasks).create_tasks()
+    employees[0].daily_route.append(tasks[0])
     # db.set_tasks(tasks)
     db.set_routes(employees)
 
 
 with DatabaseAPI(is_setup=True) as db:
     ...
-    # set_database(db)
+    set_database(db)
