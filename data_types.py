@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from typing import Protocol
 
 
-
 class Dataclass(Protocol):
     __dict__ = ...
 
@@ -14,13 +13,12 @@ class Grade:
     junior = "Джун"
 
 
+@dataclass
 class Location:
-    def __init__(self, adress, id: int = None):
-        self.adress = adress
-        self.id = id
-
-    def __repr__(self):
-        return f"'{self.adress}'"
+    address: str
+    latitude: float = None
+    longitude: float = None
+    id: int = None
 
 
 @dataclass
@@ -37,13 +35,13 @@ class Point:
 @dataclass
 class Task:
     point: Point
-    task_priority: int = None
+    priority: int = None
     time: int = None
-    id: int = None
     task_name: str = None
     is_finished: bool = False
     route: 'Route' = None
-    task_grade: Grade = None
+    required_grade: Grade = None
+    id: int = None
 
 
 class TaskHandler(ABC):
@@ -65,9 +63,9 @@ class MotivationTaskHandler(TaskHandler):
 
     @staticmethod
     def _set_params(task):
-        task.task_priority = 300
+        task.priority = 3
         task.task_name = 'Выезд на точку для стимулирования выдач'
-        task.task_grade = Grade.senior
+        task.required_grade = Grade.senior
         task.time = 240
 
 
@@ -78,9 +76,9 @@ class InstructTaskHandler(TaskHandler):
 
     @staticmethod
     def _set_params(task):
-        task.task_priority = 200
+        task.priority = 2
         task.task_name = 'Обучение агента'
-        task.task_grade = Grade.middle
+        task.required_grade = Grade.middle
         task.time = 120
 
 
@@ -91,9 +89,9 @@ class DeliveryTaskHandler(TaskHandler):
 
     @staticmethod
     def _set_params(task):
-        task.task_priority = 100
+        task.priority = 1
         task.task_name = 'Доставка карт и материалов'
-        task.task_grade = Grade.junior
+        task.required_grade = Grade.junior
         task.time = 90
 
 
@@ -122,6 +120,7 @@ TaskList = Route = list[Task]
 EmployeeList = list[Employee]
 PointList = list[Point]
 UserList = list[User]
+LocationList = list[Location]
 
 if __name__ == '__main__':
     vasa = Employee('Василий', None, None, None)

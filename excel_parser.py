@@ -25,7 +25,7 @@ class ExcelParser:
                 self.employee_sheet[index_row][0].value,
                 Location(self.employee_sheet[index_row][1].value),
                 self.employee_sheet[index_row][2].value,
-                Route(list())
+                Route()
             )
             if self._validate(employee):
                 self.employees.append(employee)

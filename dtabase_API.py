@@ -6,9 +6,10 @@ from dotenv import load_dotenv
 from settings import MAIN_DATABASE
 from abc import ABC, abstractmethod
 from data_types import *
+from datetime import datetime
 
 
-class BaseDBAPI:
+class BaseDBAPI(ABC):
     def __init__(self, db_connection):
         self.db = db_connection
 
@@ -60,6 +61,9 @@ class DatabaseAPI:
                         grade TEXT
                         )
                         """)
+            for i, employee in enumerate(employees):
+                cursor.execute(f"SELECT id FROM Locations WHERE address=='{employee.location.address}'")
+                employees[i].location.id = cursor.fetchone()[0]
             cursor.execute('SELECT uid, full_name FROM Users WHERE is_admin==0')
             for uid, full_name in cursor.fetchall():
                 employee = self._find_value_in_datalist(employees, 'full_name', full_name)
@@ -69,10 +73,100 @@ class DatabaseAPI:
                                (employee.id, employee.location.id, employee.grade))
             self.db.commit()
 
-            # for employee in employees:
-            #     cursor.execute('INSERT INTO Employees (id, login, password_hash, is_admin) VALUES (?, ?, ?, ?)',
-            #                    (user.full_name, user.login, self._hash_password(user.password), int(user.is_admin)))
-            # self.db.commit()
+        def set_locations(self, locations: LocationList):
+            cursor = self.db.cursor()
+            cursor.execute("""
+                        CREATE TABLE IF NOT EXISTS Locations (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        address TEXT UNIQUE,
+                        latitude REAL,
+                        longitude REAL
+                        )
+                        """)
+            for location in locations:
+                cursor.execute('INSERT INTO Locations (id, address, latitude, longitude) VALUES (?, ?, ?, ?)',
+                               (location.id, location.address, location.latitude, location.longitude))
+            self.db.commit()
+
+        def set_points(self, points: PointList):
+            cursor = self.db.cursor()
+            cursor.execute("""
+                        CREATE TABLE IF NOT EXISTS Points (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        location_id INTEGER NOT NULL,
+                        is_connected_yesterday INTEGER,
+                        have_cards_and_materials INTEGER,
+                        issued_cards INTEGER,
+                        accepted_requests INTEGER,
+                        days_from_last_card INTEGER
+                        )
+                        """)
+            for i, point in enumerate(points):
+                cursor.execute(f"SELECT id FROM Locations WHERE address=='{point.location.address}'")
+                points[i].location.id = cursor.fetchone()[0]
+            for point in points:
+                cursor.execute(
+                    'INSERT INTO Points (location_id, is_connected_yesterday, have_cards_and_materials, issued_cards, '
+                    'accepted_requests, days_from_last_card) VALUES (?, ?, ?, ?, ?, ?)',
+                    (point.location.id, point.is_connected_yesterday, point.have_cards_and_materials,
+                     point.issued_cards, point.accepted_requests, point.days_from_last_card))
+            self.db.commit()
+
+        def set_tasks(self, tasks: TaskList):
+            cursor = self.db.cursor()
+            cursor.execute("""
+                        CREATE TABLE IF NOT EXISTS Tasks (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        route_id INTEGER DEFAULT NULL,
+                        sequence_number INTEGER DEFAULT NULL,
+                        point_id INTEGER NOT NULL,
+                        time INTEGER NOT NULL,
+                        priority INTEGER NOT NULL,
+                        task_name TEXT,
+                        required_grade TEXT
+                        )
+                        """)
+            for i, task in enumerate(tasks):
+                cursor.execute(f"SELECT id FROM Points WHERE location_id=={task.point.location.id}")
+                tasks[i].point.id = cursor.fetchone()[0]
+            for task in tasks:
+                cursor.execute(
+                    'INSERT INTO Tasks (point_id, time, priority, task_name, required_grade) VALUES (?, ?, ?, ?, ?)',
+                    (task.point.id, task.time, task.priority, task.task_name, task.required_grade))
+            self.db.commit()
+
+        def set_routes(self, employees: EmployeeList):
+            cursor = self.db.cursor()
+            cursor.execute("""
+                        CREATE TABLE IF NOT EXISTS Routes (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        employee_id INTEGER NOT NULL,
+                        sequence_len INTEGER NOT NULL,
+                        date TEXT,
+                        )
+                        """)
+            date = datetime.now().strftime('%d-%m-%Y')
+            for employee in employees:
+                if len(employee.daily_route) > 0:
+                    cursor.execute('INSERT INTO Routes (employee_id, sequence_len, date) VALUES (?, ?, ?)',
+                                   (employee.id, len(employee.daily_route)), date)
+                    cursor.execute(f'SELECT id FROM Routes WHERE employee_id=={employee.id} AND date=="{date}"')
+                    route_id = cursor.fetchone()[0]
+                    cursor.execute(f"UPDATE Employees SET daily_route_id={route_id} WHERE id=={employee.id}")
+                    for i, task in enumerate(employee.daily_route):
+                        cursor.execute(f'UPDATE Tasks SET route_id={route_id}, sequence_number={i} WHERE id=={task.id}')
+            self.db.commit()
+
+        def set_finished_tasks(self):
+            cursor = self.db.cursor()
+            cursor.execute("""
+                        CREATE TABLE IF NOT EXISTS FinishedTasks (
+                        task_id INTEGER PRIMARY KEY,
+                        implementor_id INTEGER NOT NULL,
+                        date TEXT
+                        )
+                        """)
+            self.db.commit()
 
     class _UserAPI(BaseDBAPI):
         ...
