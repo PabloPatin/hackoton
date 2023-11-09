@@ -4,28 +4,27 @@ from excel_parser import ExcelParser
 from data_types import *
 import os
 from dotenv import load_dotenv
-from dtabase_API import DatabaseAPI
+# from database_API import DatabaseAPI
+import database_ORM
+from database_ORM import *
 from yandex_API import ask_yandex_for_time_matrix
-from settings import CITY
+from settings import CITY, DEFAULT_PASSWORD, DEFAULT_LOGIN
 
-load_dotenv()
 
-main_bd_password = os.getenv("MAIN_DB_PASSWORD")
-auth_db_password = os.getenv("AUTHORISATION_DB_PASSWORD")
+def set_user_list():
+    employees = Employee.select(Employee)
+    for employee in employees:
+        user = User.select().where(User.employee == employee.id)
+        if not user.exists():
+            User.create(full_name=employee.full_name, employee=employee, is_admin=False,
+                        login=DEFAULT_LOGIN + str(employee.id), password_hash=hex(hash(DEFAULT_PASSWORD)))
 
-employees = EmployeeList()
-points = PointList()
-tasks = TaskList()
-users = UserList()
-locations = LocationList()
 
-book = openpyxl.open("data.xlsx", read_only=True)
-parser = ExcelParser(book, points, employees)
-parser.parse_employees()
-parser.parse_points()
-manager = TaskManager(points, employees, tasks)
-manager.create_tasks()
-manager.create_routes()
+def set_admin(full_name, login, password):
+    user = User.select().where(User.login == login)
+    if not user.exists():
+        User.create(full_name=full_name, is_admin=True,
+                    login=login, password_hash=hex(hash(password)))
 
 
 def set_location_matrix():
@@ -61,10 +60,21 @@ def set_database(db):
     tasks = []
     TaskManager(points, employees, tasks).create_tasks()
     employees[0].daily_route.append(tasks[0])
+    print(employees[0].daily_route)
     # db.set_tasks(tasks)
     db.set_routes(employees)
 
 
-with DatabaseAPI(is_setup=True) as db:
-    ...
-    set_database(db)
+if __name__ == '__main__':
+    db = SqliteDatabase(DATABASE_FILE)
+    BaseDataTable.set_tables()
+    set_admin("Липатников Павел Андрееич", 'pashkalop', 'admin')
+    book = openpyxl.open("data.xlsx", read_only=True)
+    parser = ExcelParser(book)
+    parser.parse_employees()
+    parser.parse_points()
+    set_user_list()
+
+    manager = TaskManager()
+    manager.create_tasks()
+    manager.create_routes()

@@ -3,7 +3,7 @@ import sqlite3
 from sqlite3 import Connection
 from os import getenv
 from dotenv import load_dotenv
-from settings import MAIN_DATABASE
+from settings import DATABASE_FILE
 from abc import ABC, abstractmethod
 from data_types import *
 from datetime import datetime
@@ -26,14 +26,16 @@ class BaseDBAPI(ABC):
                 return data
 
 
-# class
-
-
 class DatabaseAPI:
     class _SetupAPI(BaseDBAPI):
         @staticmethod
         def _hash_password(password):
             return str(hex(hash(password)))
+
+        # def _load_employees(self) -> EmployeeList:
+        #     cursor = self.db.cursor()
+        #     employees = EmployeeList()
+        #     cursor.execute('SELECT full_name, address, latitude, longitude, location_id, grade, id WHERE')
 
         def set_users(self, users: UserList):
             cursor = self.db.cursor()
@@ -132,7 +134,7 @@ class DatabaseAPI:
             for task in tasks:
                 cursor.execute(
                     'INSERT INTO Tasks (point_id, time, priority, task_name, required_grade) VALUES (?, ?, ?, ?, ?)',
-                    (task.point.id, task.time, task.priority, task.task_name, task.required_grade))
+                    (task.point.id, task.duration, task.priority, task.task_name, task.required_grade))
             self.db.commit()
 
         def set_routes(self, employees: EmployeeList):
@@ -146,10 +148,16 @@ class DatabaseAPI:
                         )
                         """)
             date = datetime.now().strftime('%d-%m-%Y')
+            if employees[0].id is None:
+                for i, employee in enumerate(employees):
+                    cursor.execute(
+                        f'SELECT id FROM Employees, Users WHERE Employees.id=Users.uid AND Users.full_name=="{employee.full_name}"')
+                    employees[i].id = cursor.fetchone()[0]
             for employee in employees:
                 if len(employee.daily_route) > 0:
+                    print(employee.id, len(employee.daily_route), date)
                     cursor.execute('INSERT INTO Routes (employee_id, sequence_len, date) VALUES (?, ?, ?)',
-                                   (employee.id, len(employee.daily_route)), date)
+                                   (employee.id, len(employee.daily_route), date))
                     cursor.execute(f'SELECT id FROM Routes WHERE employee_id=={employee.id} AND date=="{date}"')
                     route_id = cursor.fetchone()[0]
                     cursor.execute(f"UPDATE Employees SET daily_route_id={route_id} WHERE id=={employee.id}")

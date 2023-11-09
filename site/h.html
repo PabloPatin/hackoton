@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Users</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Users</h1>
+    </header>
+    
+    <main>
+        <table>
+            <tr>
+                <th>ФИО</th>
+                <th>Логин</th>
+                <th>Грейд</th>
+                <th>Локация</th>
+                <th></th>
+            </tr>
+            <tr>
+                <td>Иванов Иван Иванович</td>
+                <td>ivanov</td>
+                <td>2</td>
+                <td>Москва</td>
+                <td>
+                    <button onclick="editRow(this)">Редактировать</button>
+                    <button onclick="deleteRow(this)">Удалить</button>
+                </td>
+            </tr>
+            <!-- Другие строки таблицы -->
+        </table>
+        
+        <button onclick="addRow()">Добавить</button>
+    </main>
+    
+    <script src="script.js"></script>
+</body>
+</html>
