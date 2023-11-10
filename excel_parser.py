@@ -1,10 +1,10 @@
-from database_ORM import *
 from openpyxl import Workbook
-from settings import DEFAULT_LOGIN, DEFAULT_PASSWORD
+from logger import logger
 
 
 class ExcelParser:
-    def __init__(self, book: Workbook):
+    def __init__(self, book: Workbook, db_api):
+        self.db_api = db_api
         self.point_sheet = book.worksheets[book.sheetnames.index('Входные данные для анализа')]
         self.employee_sheet = book.worksheets[book.sheetnames.index('Справочник сотрудников')]
 
@@ -22,11 +22,11 @@ class ExcelParser:
                 'location': self.employee_sheet[index_row][1].value,
                 'grade': self.employee_sheet[index_row][2].value
             }
+            location = {'address': employee['location']}
             if self._validate(employee):
-                location = Location.select().where(Location.address == employee['location'])
-                if not location.exists():
-                    Location.create(address=employee['location'])
-                employee = Employee.create(**employee)
+                self.db_api.try_to_set_table_row(self.db_api.Location, **location)
+                self.db_api.try_to_set_table_row(self.db_api.Employee, **employee)
+        logger.info(f'Загружены данные о сотрудниках')
 
     def parse_points(self):
         for index_row in range(2, self.point_sheet.max_row + 1):
@@ -38,9 +38,8 @@ class ExcelParser:
                 'accepted_requests': self.point_sheet[index_row][5].value,
                 'issued_cards': self.point_sheet[index_row][6].value
             }
-
+            location = {'address': point['location']}
             if self._validate(point):
-                location = Location.select().where(Location.address == point['location'])
-                if not location.exists():
-                    Location.create(address=point['location'])
-                Point.create(**point)
+                self.db_api.try_to_set_table_row(self.db_api.Location, **location)
+                self.db_api.try_to_set_table_row(self.db_api.Point, **point)
+        logger.info(f'Загружены данные о точках')

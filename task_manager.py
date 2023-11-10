@@ -1,5 +1,7 @@
 from data_types import *
 from database_ORM import *
+from task_handlers import task_handlers
+
 
 class PointMatrix:
     ...

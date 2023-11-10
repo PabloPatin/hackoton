@@ -1,10 +1,10 @@
-from abc import ABC
-
 from peewee import *
 from settings import DATABASE_FILE
 
 
-class BaseDataTable(Model):
+class DataBase(Model):
+    name = DATABASE_FILE
+
     class Meta:
         database = SqliteDatabase(DATABASE_FILE)
 
@@ -12,22 +12,26 @@ class BaseDataTable(Model):
     def set_tables(cls):
         cls._meta.database.create_tables(cls.__subclasses__())
 
+    @classmethod
+    def clear_tables(cls):
+        cls._meta.database.drop_tables(cls.__subclasses__())
 
-class Route(BaseDataTable):
+
+class Route(DataBase):
     id = AutoField(primary_key=True)
     length = IntegerField(null=False)
     date = DateField(formats='%Y-%m-%d')
     is_completed = BooleanField(default=False)
 
 
-class Location(BaseDataTable):
+class Location(DataBase):
     id = AutoField(primary_key=True)
     address = TextField(null=False, unique=True)
     latitude = DoubleField(null=True)
     longitude = DoubleField(null=True)
 
 
-class Point(BaseDataTable):
+class Point(DataBase):
     id = AutoField(primary_key=True)
     location = ForeignKeyField(Location, null=False, on_update='CASCADE')
     is_connected_yesterday = BooleanField()
@@ -37,7 +41,7 @@ class Point(BaseDataTable):
     issued_cards = IntegerField()
 
 
-class Employee(BaseDataTable):
+class Employee(DataBase):
     id = AutoField(primary_key=True)
     route = ForeignKeyField(Route, backref='implementor', unique=True, on_update='CASCADE', null=True)
     grade = CharField(10)
@@ -45,7 +49,7 @@ class Employee(BaseDataTable):
     full_name = CharField(100, null=False)
 
 
-class User(BaseDataTable):
+class User(DataBase):
     uid = AutoField(primary_key=True)
     full_name = ForeignKeyField(Employee.full_name, null=True, on_update='CASCADE')
     login = CharField(64, unique=True)
@@ -54,7 +58,7 @@ class User(BaseDataTable):
     is_admin = BooleanField(null=False)
 
 
-class Task(BaseDataTable):
+class Task(DataBase):
     id = AutoField(primary_key=True)
     route = ForeignKeyField(Route, on_update='CASCADE', backref='tasks', null=True)
     sequence_number = IntegerField(null=True)
@@ -64,10 +68,3 @@ class Task(BaseDataTable):
     priority = CharField(10)
     required_grade = CharField(10)
     finish_time = DateTimeField(formats='%Y-%m-%d %M:%s', null=True)
-
-
-
-def set_database(db: SqliteDatabase):
-    db.connect()
-    db.create_tables([Location, Task, User, Point, Employee, Route])
-    db.close()

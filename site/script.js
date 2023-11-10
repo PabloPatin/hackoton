@@ -18,6 +18,7 @@ function editRow(button) {
     button.parentNode.insertBefore(saveButton, button);
 }
 
+
 function saveRow(button) {
     var row = button.parentNode.parentNode;
     var cells = row.getElementsByTagName("td");
