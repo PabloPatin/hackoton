@@ -16,6 +16,13 @@ class DataBase(Model):
     def clear_tables(cls):
         cls._meta.database.drop_tables(cls.__subclasses__())
 
+    @classmethod
+    def exit(cls):
+        cls._meta.database.close()
+
+    @classmethod
+    def open(cls):
+        cls._meta.database.connect()
 
 class Route(DataBase):
     id = AutoField(primary_key=True)
@@ -46,7 +53,7 @@ class Employee(DataBase):
     route = ForeignKeyField(Route, backref='implementor', unique=True, on_update='CASCADE', null=True)
     grade = CharField(10)
     location = ForeignKeyField(Location, null=False)
-    full_name = CharField(100, null=False)
+    full_name = CharField(100, null=False, unique=True)
 
 
 class User(DataBase):
@@ -62,7 +69,7 @@ class Task(DataBase):
     id = AutoField(primary_key=True)
     route = ForeignKeyField(Route, on_update='CASCADE', backref='tasks', null=True)
     sequence_number = IntegerField(null=True)
-    point = ForeignKeyField(Point, on_update='CASCADE')
+    point = ForeignKeyField(Point, on_update='CASCADE', unique=False)
     task_name = CharField(100)
     duration = IntegerField()
     priority = CharField(10)
