@@ -15,18 +15,11 @@ def reset_database_using_excel():
     db_api.create_tasks()
     db_api.set_location_coordinates()
     db_api.create_routes()
-    employees = db_api.Employee.select()
-    for employee in employees:
-        select = db_api.Task.select().join(db_api.Employee, on=(db_api.Employee.route == db_api.Task.route)).where(
-            db_api.Employee.id == employee.id)
-        db_api.Employee.get(db_api.Employee.route == employee.route)
-        print(employee.grade)
-        for data in select:
-            print(data.point, end='  ')
-        print()
     DataBase.exit()
     logger.info('Процесс завершён')
 
 
 if __name__ == '__main__':
     reset_database_using_excel()
+    db_api = DatabaseAPI(DataBase).admin('admin', 'admin')
+    print(db_api)

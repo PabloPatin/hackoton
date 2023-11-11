@@ -2,6 +2,7 @@ import openpyxl
 from abc import ABC
 from peewee import DoesNotExist, IntegrityError
 from settings import DEFAULT_PASSWORD, DEFAULT_LOGIN,DATA_PATH ,EXCELL_DATAFILE, CITY
+from functions import hash_string
 from exceptions import AuthorisationError
 from yandex_API import request_coordinates
 from excel_parser import ExcelParser
@@ -81,9 +82,20 @@ class _SetupAPI(BaseDBAPI):
     def _set_user(self, full_name, login, password, is_admin=False, employee=None):
         try:
             self.User.create(full_name=full_name, employee=employee, is_admin=is_admin,
-                             login=login, password_hash=hex(hash(password)))
+                             login=login, password_hash=hash_string(password))
         except IntegrityError as ex:
             raise AuthorisationError('Пользователь с таким логином уже существует', ex)
+
+    def print_routes(self):
+        employees = self.Employee.select()
+        for employee in employees:
+            select = self.Task.select().join(self.Employee, on=(self.Employee.route == self.Task.route)).where(
+                self.Employee.id == employee.id)
+            self.Employee.get(self.Employee.route == employee.route)
+            print(employee.grade)
+            for data in select:
+                print(data.point, end='  ')
+            print()
 
 
 class _UserAPI(BaseDBAPI):
@@ -122,8 +134,10 @@ class DatabaseAPI(BaseDBAPI):
     def admin(self, login: str, password: str):
         if not self._check_user_data(login, password):
             logger.error(f'Неверный пароль')
+            return 'wrong login or password'
         elif not self._check_if_admin(login):
             logger.error(f'Пользователь {login} не является администратором, доступ запрещён')
+            return 'user is not admin'
         else:
             logger.info(f'Администратор {login} успешно подключился к базе данных {self.database.name}')
             return self._admin(self.database)
@@ -134,7 +148,8 @@ class DatabaseAPI(BaseDBAPI):
 
     def _check_user_data(self, login: str, password: str):
         user = self._get_user_by_login(login)
-        return user.password_hash == hex(hash(password))
+        print(user.password_hash, hash_string(password))
+        return user.password_hash == hash_string(password)
 
 
 if __name__ == "__main__":

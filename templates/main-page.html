@@ -1,0 +1,30 @@
+<!-- templates/main_page.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main_page.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Logo">
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#" class="nav-link" onclick="openSection('Выездные сотрудники')">Выездные сотрудники</a></li>
+                <li><a href="#" class="nav-link" onclick="openSection('Администраторы')">Администраторы</a></li>
+                <li><a href="#" class="nav-link" onclick="openSection('Задания')">Задания</a></li>
+                <li><a href="#" class="nav-link" onclick="openSection('Точки')">Точки</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="content" id="sectionContent">
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+</html>
