@@ -25,6 +25,7 @@ class ExcelParser:
             location = {'address': employee['location']}
             if self._validate(employee):
                 self.db_api.try_to_set_table_row(self.db_api.Location, **location)
+                employee['location'] = self.db_api.Location.get(self.db_api.Location.address == employee['location'])
                 self.db_api.try_to_set_table_row(self.db_api.Employee, **employee)
         logger.info(f'Загружены данные о сотрудниках')
 
@@ -41,5 +42,6 @@ class ExcelParser:
             location = {'address': point['location']}
             if self._validate(point):
                 self.db_api.try_to_set_table_row(self.db_api.Location, **location)
+                point['location'] = self.db_api.Location.get(self.db_api.Location.address == point['location'])
                 self.db_api.try_to_set_table_row(self.db_api.Point, **point)
         logger.info(f'Загружены данные о точках')

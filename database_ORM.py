@@ -1,16 +1,20 @@
 from peewee import *
-from settings import DATABASE_FILE
+from settings import DATABASE_FILE, DATA_PATH
 
 
 class DataBase(Model):
     name = DATABASE_FILE
 
     class Meta:
-        database = SqliteDatabase(DATABASE_FILE)
+        database = SqliteDatabase(f'{DATA_PATH}/{DATABASE_FILE}')
 
     @classmethod
     def set_tables(cls):
         cls._meta.database.create_tables(cls.__subclasses__())
+
+    # @classmethod
+    # def renew_tables(cls):
+    #     cls._meta.database.create_tables(cls.__subclasses__(), safe=True)
 
     @classmethod
     def clear_tables(cls):
@@ -23,6 +27,7 @@ class DataBase(Model):
     @classmethod
     def open(cls):
         cls._meta.database.connect()
+
 
 class Route(DataBase):
     id = AutoField(primary_key=True)

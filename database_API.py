@@ -48,7 +48,7 @@ class _SetupAPI(BaseDBAPI):
     @staticmethod
     def try_to_set_table_row(table, **data):
         try:
-            table.create(**data)
+            data = table.create(**data)
         except IntegrityError as ex:
             field = str(ex.orig).split('.')[-1]
             logger.debug(f'{ex}\n{data[field]}')
@@ -65,6 +65,7 @@ class _SetupAPI(BaseDBAPI):
         for location in tqdm(locations):
             if not location.address.startswith(CITY):
                 location.address = f'{CITY}, {location.address}'
+                location.save()
             if not (location.latitude and location.longitude):
                 try:
                     location.latitude, location.longitude = request_coordinates(location.address)

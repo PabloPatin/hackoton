@@ -37,6 +37,7 @@ def create_travel_matrix(*coordinates):
     matrix = []
     for coordinate in tqdm(coordinates):
         row = create_matrix_row(coordinate, coordinates)
+        row = [i//60 for i in row]
         matrix.append(row)
     return matrix
 

@@ -17,3 +17,5 @@ LOG_PATH = 'logs'
 LOG_FILE = 'log.txt'
 LOG_LVL = INFO
 
+WORK_TIME_MIN = 480
+
