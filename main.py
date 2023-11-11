@@ -21,5 +21,5 @@ def reset_database_using_excel():
 
 if __name__ == '__main__':
     reset_database_using_excel()
-    db_api = DatabaseAPI(DataBase).admin('admin', 'admin')
-    print(db_api)
+    # db_api = DatabaseAPI(DataBase).admin('admin', 'admin')
+    # print(db_api)
